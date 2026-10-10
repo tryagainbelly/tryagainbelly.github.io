@@ -1,6 +1,6 @@
 ---
 title: "Trouver, Craquer, Gagner"
-description: "Comment le CTF GeoGuessr d'une école cyber leakait les coordonnées GPS exactes via l'API Mapillary."
+description: "Comment le CTF GeoGuessr d'une école cyber leak les coordonnées GPS exactes via l'API Mapillary."
 date: 2026-07-01 09:00:00 +0200
 categories: [Web]
 tags: [lehack, Web]
