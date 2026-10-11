@@ -1,6 +1,6 @@
 ---
 title: "Credential Stuffing"
-description: "Comment font les hackers pour hacker vos comptes ?"
+description: "Anatomie d'une attaque par credential stuffing : sourcing des combolists, outils d'automatisation, contournement des protections, cas réels, et comment s'en protéger."
 date: 2026-10-09 09:00:00 +0200
 categories: [Web]
 tags: [credential-stuffing]
@@ -9,25 +9,27 @@ tags: [credential-stuffing]
 # Credential Stuffing
 ### Comment font les hackers pour hacker vos comptes ?
 
-La première chose à faire, c'est de ne pas associer le credential stuffing au brute force, car ce n'est pas la même chose même si on y retrouve certains patterns. Le brute force, c'est le fait de chercher un mot de passe en partant de rien : on va créer une multitude de possibilités et les essayer en espérant que ça fonctionne. Le credential stuffing, c'est le fait d'essayer des mots de passe déjà utilisés par la victime, récupérés dans des fuites de données par exemple. Le vecteur est donc bien moins aléatoire, et contourne certaines protections mises en place au fil du temps, on peut par exemple citer le rate limiting et la complexité des mots de passe.
+**TL;DR :** le credential stuffing consiste à réutiliser des identifiants volés lors de fuites de données pour tenter de se connecter à d'autres comptes, en pariant sur la réutilisation de mots de passe. Cet article détaille comment les attaquants trouvent ces données, les outils et l'automatisation qu'ils emploient, et comment contourner les protections réseaux classiques avant de revenir, en conclusion, sur ce qui rend cette attaque efficace et comment s'en prémunir.
+
+La première chose à faire, c'est de ne pas associer le credential stuffing au brute force, car ce n'est pas la même chose, même si on y retrouve certains patterns. Le brute force, c'est le fait de chercher un mot de passe en partant de rien : on va créer une multitude de possibilités et les essayer en espérant que ça fonctionne. Le credential stuffing, c'est le fait d'essayer des mots de passe déjà utilisés par la victime, récupérés dans des fuites de données par exemple. Le vecteur est donc bien moins aléatoire et contourne certaines protections mises en place au fil du temps, on peut par exemple, citer le rate limiting et la complexité des mots de passe.
 
 ### Anatomie d'une attaque
 
-Pour mettre au point ce genre d'attaque, les hackers ont besoin de plusieurs ressources, plus ou moins faciles à obtenir et de qualité plus ou moins bonne. Nous allons donc voir les différents points et comment ils s'en servent pour mener une attaque à bien.
+Pour mettre au point ce genre d'attaque, les hackers ont besoin de plusieurs ressources, plus ou moins faciles à obtenir et de qualité variable. Nous allons donc voir les différents points et comment ils s'en servent pour mener une attaque à bien.
 
 #### D'où viennent les données
 
 Les données se présentent sous deux formes : des logs ou des combolists.
 
-Les logs sont le plus souvent récupérés directement depuis le PC des victimes. Vous avez sûrement déjà vu des vidéos YouTube, des annonces ou des articles proposant d'avoir la toute dernière version de Photoshop ou d'un autre logiciel gratuitement : il suffit de télécharger un fichier et de l'installer. En réalité, ce type de logiciel a souvent été craqué puis modifié avec du code malveillant, dans le but d'installer un stealer sur un maximum de PC et de récupérer les identifiants stockés sur la machine de la victime. Les attaquants reçoivent ensuite ces données sur Discord (via webhook), Telegram (via bot) ou d'autres méthodes, sous forme de fichiers texte au format `url:mail:pass`, et parfois, plus rarement, avec des tokens de session. L'intérêt pour l'attaquant est là : contrairement à une combolist classique, un log permet de savoir directement sur quel site tel identifiant a été utilisé, sans avoir à deviner ou à tester à l'aveugle.
+Les logs sont le plus souvent récupérés directement depuis le PC des victimes. Vous avez sûrement déjà vu des vidéos YouTube, des annonces ou des articles proposant d'avoir la toute dernière version de Photoshop ou d'un autre logiciel gratuitement : il suffit de télécharger un fichier et de l'installer. En réalité, ce type de logiciel a souvent été craqué puis modifié avec du code malveillant, dans le but d'installer un stealer sur un maximum de PC et de récupérer les identifiants stockés sur la machine de la victime. Les attaquants reçoivent ensuite ces données sur Discord (via webhook), Telegram (via bot) ou d'autres méthodes, sous forme de fichiers texte au format `url:mail:pass`, et parfois plus rarement avec des tokens de session. L'intérêt pour l'attaquant est là : contrairement à une combolist classique, un log permet de savoir directement sur quel site tel identifiant a été utilisé, sans avoir à deviner ou à tester à l'aveugle.
 
 Les combolists se construisent de deux façons, à ma connaissance : soit directement depuis des bases de données, soit en se basant sur des logs et en filtrant sur une caractéristique précise (un domaine, un site, etc.).
 
-Des outils ont été développés par des personnes du milieu dans ce but précis. L'avantage de cette seconde méthode, c'est qu'elle permet de cibler et de trier les credentials. Par exemple, si quelqu'un souhaite récupérer des creds pour le site `toto1`, il lui suffit de faire un tri basé sur les URLs présentes dans les logs. Il est aussi possible de trier par groupe plutôt que par site unique. Si on prend l'exemple des fast-foods : il est assez probable qu'une personne ayant un compte chez McDonald's en ait aussi un chez Burger King (ou équivalent). La logique est là : regrouper par thématique selon le besoin, car en plus d'avoir une chance de tomber sur un compte valide sur un site similaire, il est probable que les mêmes identifiants y soient réutilisés.
+Des outils ont été développés spécifiquement dans ce but. L'avantage de cette seconde méthode, c'est qu'elle permet de cibler et de trier les credentials. Par exemple, si quelqu'un souhaite récupérer des creds pour le site `toto1`, il lui suffit de faire un tri basé sur les URLs présentes dans les logs. Il est aussi possible de trier par groupe plutôt que par site unique. Si l'on prend l'exemple des fast-foods : il est assez probable qu'une personne ayant un compte chez McDonald's en ait aussi un chez Burger King (ou équivalent). La logique est là : regrouper par thématique selon le besoin, car en plus d'avoir une chance de tomber sur un compte valide sur un site similaire, il est probable que les mêmes identifiants y soient réutilisés.
 
 Sur les forums, vous pouvez trouver des fichiers du type `300K mail Orange UHQ` : il s'agit simplement de logs triés par domaine (ici Orange), que la personne a ensuite mis à disposition.
 
-La deuxième méthode consiste à récupérer directement des bases de données. Il est possible de scanner Internet à l'aide de listes de mots-clés pour trouver des bases de données SQL vulnérables, et d'en récupérer les combos `user:pass` afin de construire des combolists. Mais là encore, tout dépend de l'objectif recherché : cette méthode peut s'avérer peu intéressante, car très sélective et pas forcément en lien avec ce que l'attaquant avait prévu de faire.
+La deuxième méthode consiste à récupérer directement des bases de données. Il est possible de scanner Internet à l'aide de listes de mots-clés pour trouver des bases de données SQL vulnérables et d'en récupérer les combos `user:pass` afin de construire des combolists. Mais là encore, tout dépend de l'objectif recherché : cette méthode peut s'avérer peu intéressante, car très sélective et pas forcément en lien avec ce que l'attaquant avait prévu de faire.
 
 Voilà donc le format des données que l'on peut retrouver sur les forums et canaux Telegram. L'accès est souvent gratuit pour un échantillon, mais devient payant pour la suite, avec des abonnements annuels, mensuels ou journaliers selon la qualité et la quantité de données récupérées. Ces abonnements donnent généralement accès à un canal Telegram privé diffusant des logs dits "exclusifs" ou "fresh" (c'est-à-dire jamais testés par d'autres). Voici un exemple de grille tarifaire que l'on peut trouver pour ce genre d'accès :
 
@@ -40,19 +42,19 @@ Voilà donc le format des données que l'on peut retrouver sur les forums et can
 
 Plusieurs outils ont été développés dans le but de mettre en œuvre ce type d'attaque. Parmi eux, on trouve SilverBullet (propriétaire) et OpenBullet (open source) : ces deux outils permettent de mener ce genre d'attaques, avec comme ressources minimales une combolist et une config.
 
-Je viens d'expliquer comment sont fabriquées les combolists ; voyons maintenant comment les attaquants les exploitent. Pour cela, ils ont besoin d'une config : un script écrit en LoliScript, ou assemblé sous forme de blocs, qui va interroger un site, une API, etc., dans le but de simuler une connexion. Lors de la création d'une config, il est possible d'envoyer des requêtes de test et d'en observer le résultat dans un panneau de logs dédié, situé en bas à droite de l'interface.
+Je viens d'expliquer comment sont fabriquées les combolists ; voyons maintenant comment les attaquants les exploitent. Pour cela, ils ont besoin d'une config : un script écrit en LoliScript, ou assemblé sous forme de blocs, qui va interroger un site, une API, etc, dans le but de simuler une connexion. Lors de la création d'une config, il est possible d'envoyer des requêtes de test et d'en observer le résultat dans un panneau de logs dédié, situé en bas à droite de l'interface.
 
 Ces outils proposent de nombreux blocs permettant, avec une grande facilité, de parser du contenu, de cibler des champs en particulier, de poser des conditions, etc. Et si le bloc qu'il vous faut n'existe pas, il reste possible d'en coder un soi-même en LoliScript.
 
 La config utilise comme données celles présentes dans la combolist, en les prenant ligne par ligne et en associant l'identifiant au mot de passe. Dès lors, il devient possible d'automatiser l'attaque grâce à des combolists de plusieurs milliers, voire millions de lignes.
 
-Un marché existe aussi autour des configs elles-mêmes, car c'est la ressource la plus difficile à obtenir ou à produire, ce qui permet à certaines personnes de gagner une somme non négligeable en les vendant.
+Un marché existe aussi autour des configs elles-mêmes, car c'est la ressource la plus difficile à obtenir ou à produire ce qui permet à certaines personnes de gagner une somme non négligeable en les vendant.
 
 On peut aussi citer SilverBullet Pro, qui propose des configs chiffrées de façon à masquer leur contenu. Cela pose un problème si l'on souhaite comprendre comment une protection a été contournée, ou si l'on veut vérifier l'absence de code malveillant, car une config peut tout à fait exécuter des commandes shell ou des scripts.
 
 ##### Exemple pratique sur un site "cas d'école"
 
-Ce site est connu dans le milieu pour être simple et bien adapté à l'apprentissage.
+C'est un site couramment utilisé pour s'entraîner à ce type d'attaque, car il est simple et bien adapté à l'apprentissage.
 
 **Prérequis :**
 - Un compte fonctionnel sur la plateforme
@@ -109,13 +111,13 @@ Received Payload:
 {"message":"Bad username or password.","code":"bad-credentials","statusCode":401}
 ```
 
-![screen_requete_failed1.png]
+![/assets/img/credential_stuffing/screen_requete_failed1.png]
 
 À noter que notre bot obtient un statut `none` à ce stade.
 
 On peut ensuite ajouter une condition avec le bloc `keycheck`, qui permet d'attribuer un statut à notre bot en fonction de conditions définies. On peut par exemple trier sur le code de réponse, sur des chaînes de caractères présentes dans la réponse, etc. L'objectif est de multiplier les signaux indiquant que la requête a échoué, afin d'éviter les faux positifs : si l'une des conditions indique un échec, le bot s'arrête et ne passe pas à l'étape suivante. Si on relance la simulation avec ce bloc de condition en place, on obtient le même résultat qu'avant, à la différence près que le bot passe désormais au statut `fail`.
 
-Maintenant que le tri des échecs est en place, on peut refaire le même test avec notre propre compte, pour voir à quoi ressemble le résultat lorsqu'on obtient un compte valide. Dans le debugger, il suffit de remplacer le couple `user:pass` par nos propres identifiants.
+Maintenant, que le tri des échecs est en place, on peut refaire le même test avec notre propre compte, pour voir à quoi ressemble le résultat lorsqu'on obtient un compte valide. Dans le debugger, il suffit de remplacer le couple `user:pass` par nos propres identifiants.
 
 En relançant le script, on observe un changement d'état : le bot passe en statut `BAN`. En réalité, cela signifie simplement qu'aucune de nos conditions ne prévoyait la réponse obtenue. Si on regarde cette réponse, on y trouve :
 ```json
@@ -141,7 +143,7 @@ Cette méthode d'attaque se prête particulièrement bien à l'automatisation : 
 
 #### Le cas des applications mobiles
 
-Le credential stuffing ne se limite pas aux sites web : il est aussi possible de cibler des applications mobiles, via un émulateur et des outils de debug comme ADB. Contrairement à un site web classique, une application mobile communique généralement avec son backend via une API (REST ou GraphQL), ce qui peut même simplifier l'automatisation de l'attaque. Pas besoin de gérer du rendu HTML, la réponse est directement structurée en JSON. On peut intercepter ces requêtes grâce à un outil comme HTTPToolkit, en installant simplement son certificat sur l'appareil ou l'émulateur.
+Le credential stuffing ne se limite pas aux sites web : il est aussi possible de cibler des applications mobiles, via un émulateur et des outils de debug comme ADB. Contrairement à un site web classique, une application mobile communique généralement avec son backend via une API (REST ou GraphQL), ce qui peut même simplifier l'automatisation de l'attaque pas besoin de gérer du rendu HTML, la réponse est directement structurée en JSON. On peut intercepter ces requêtes grâce à un outil comme HTTPToolkit, en installant simplement son certificat sur l'appareil ou l'émulateur.
 
 Certaines applications se protègent contre ce genre de manipulation : si elles détectent la présence d'un débogueur ou un appareil rooté, elles peuvent par exemple rester bloquées en chargement indéfiniment. Dans ce cas, des outils comme Frida permettent de contourner ces protections en manipulant le comportement de l'application à l'exécution.
 
@@ -149,7 +151,7 @@ Certaines applications se protègent contre ce genre de manipulation : si elles 
 
 On peut par exemple citer le cas de HexDex, un hacker français d'une vingtaine d'années interpellé en avril 2026, soupçonné d'une longue série de cyberattaques : une quinzaine de fédérations sportives françaises, le Système d'information sur les armes (SIA), la plateforme e-campus, ou encore des organisations comme la CFDT et FO. Le credential stuffing aurait fait partie de ses méthodes, selon des éléments rapportés en dehors de la couverture presse initiale. Les données exfiltrées étaient ensuite republiées sur des plateformes comme BreachForums et DarkForum.
 
-Ce qui nous amène à un autre cas d'usage : les "serveurs de gen" (génération de comptes), ou même de simples particuliers, qui tentent de gagner un peu d'argent en revendant des comptes de tout type. On retrouve aussi des usages liés au vol de contenu, que ce soit sur des sites pour adultes ou sur des comptes de réseaux sociaux (Snapchat, Instagram, OnlyFans, etc.), comme on a pu le voir récemment avec le démantèlement de la plateforme [NudeLeakTeens](https://www.24heures.ch/cybercriminalite-la-plateforme-de-photos-intimes-volees-a-17000-femmes-fermee-140616023603), qui revendait des contenus intimes issus de plus de 17 000 victimes dans le monde, provenant notamment de comptes Snapchat, Instagram, TikTok et Facebook piratés. D'après mes propres recherches sur le mode opératoire de la plateforme, le credential stuffing faisait partie des méthodes utilisées pour accéder à ces comptes.
+Ce qui nous amène à un autre cas d'usage : les "serveurs de gen" (génération de comptes), ou même de simples particuliers, qui tentent de gagner un peu d'argent en revendant des comptes de tout type. On retrouve aussi des usages liés au vol de contenu, que ce soit sur des sites pour adultes ou sur des comptes de réseaux sociaux (Snapchat, Instagram, OnlyFans, etc.) comme on a pu le voir récemment avec le démantèlement de la plateforme [NudeLeakTeens](https://www.24heures.ch/cybercriminalite-la-plateforme-de-photos-intimes-volees-a-17000-femmes-fermee-140616023603), qui revendait des contenus intimes issus de plus de 17 000 victimes dans le monde, provenant notamment de comptes Snapchat, Instagram, TikTok et Facebook piratés. D'après mes propres recherches sur le mode opératoire de la plateforme, le credential stuffing faisait partie des méthodes utilisées pour accéder à ces comptes.
 
 Beaucoup de ces données sont ensuite revendues ou partagées gratuitement sur des forums et marketplaces comme BreachForums et ses successeurs, ou sur Telegram, où s'échangent de nombreuses listes. Les prix sont bien souvent dérisoires à l'unité, mais le modèle reste rentable en gros volume.
 
@@ -160,6 +162,10 @@ On peut aussi évoquer la notion de combolist "fresh", qui désigne simplement u
 Comme nous avons pu le voir, le credential stuffing est une attaque redoutable, capable de permettre l'accès à des comptes parfois très sensibles. Elle démontre aussi une chose essentielle : avoir un mot de passe fort ne sert à rien si l'attaquant le possède déjà en clair. La force d'un mot de passe protège contre le brute force, pas contre la réutilisation.
 
 Cette attaque n'exploite d'ailleurs aucune faille technique du site visé : elle repose entièrement sur une habitude humaine, celle de réutiliser les mêmes identifiants d'un service à l'autre.
+
+Voyons maintenant comment se protéger de ce type d'attaque. Côté site, il est possible de mettre en place des solutions qui peuvent dissuader certains attaquants, ou en tout cas les ralentir considérablement : on peut penser au CAPTCHA, à des services comme Cloudflare, etc. Le MFA (authentification multi-facteurs) est également une bonne solution, puisqu'il impose de compromettre un autre compte ou un autre appareil en plus du mot de passe.
+
+Mais l'une des mesures les plus simples à mettre en place vient de l'utilisateur lui-même : ne pas réutiliser son mot de passe sur plusieurs sites. Un mot de passe = un site ou une application, sinon ce genre de problème peut survenir. Dans les faits, c'est plus facile à dire qu'à faire : retenir des dizaines de mots de passe uniques est contraignant, et la flemme pousse naturellement à réutiliser le même partout. C'est précisément le rôle d'un gestionnaire de mots de passe (Bitwarden, KeePass, etc.) : il génère et retient un mot de passe fort et unique pour chaque service, sans effort de mémorisation de ta part.
 
 Reste une question qu'on n'a pas encore abordée : comment les sites détectent-ils et bloquent-ils ce genre d'attaque automatisée, et comment les attaquants contournent-ils ces protections ? C'est le sujet du prochain article de cette série, consacré au duel entre credential stuffing et systèmes anti-bot.
 

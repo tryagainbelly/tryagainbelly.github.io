@@ -9,14 +9,15 @@ tags: [wordpress, cve]
 # PoC Ultimate Member 2.12.0
 
 ```
-> NOTODAY
-
-- [2026-05-01~2026-05-30] #red Découverte de la faille
-- [2026-06-15] #yellow Demande de CVE
-- [2026-08-26] #purple Réponse de CVE
-- [2026-08-26] #orange Envoie d'un mail à wpscan
-- [2026-10-10] #red Publication de la faille
+- [2026-05-01~2026-05-30] Découverte de la faille
+- [2026-06-15] Demande de CVE
+- [2026-06-15] Mail envoyé à l'administrateur du GitHub du plugin, avec explication de la faille et proposition de correctif | Aucune réponse reçue
+- [2026-08-26] Réponse de CVE
+- [2026-08-26] Envoie d'un mail à wpscan
+- [2026-10-10] Publication de la faille
 ```
+
+**TL;DR :** le plugin WordPress Ultimate Member (de la 2.12.0 à la 2.14.0, la dernière version en date) contient une faille dans sa vérification de nonce qui permet à n'importe quel visiteur non authentifié d'uploader des fichiers sur le serveur. Cet article explique la faille dans le code, puis la démontre avec un PoC testé sur deux versions du plugin.
 
 ### Ultimate Member
 
@@ -47,7 +48,7 @@ Ultimate Member permet de faire beaucoup de choses. Je me suis intéressé aux f
 
 En regardant dans le code, et en suivant le chemin emprunté par les fichiers uploadés ainsi que les fonctions associées, on peut observer un problème particulier.
 
-À la ligne 519 du fichier `ultimatemember/includes/core/class-files.php`, dans la fonction `ajax_image_upload()`, on retrouve une condition contenant une faille de sécurité. En effet, la condition indique que si l'on présente un nonce invalide et que l'on n'est pas connecté, aucune erreur n'est déclenchée. Cela pose un gros problème : un attaquant a la possibilité d'uploader une image sans être authentifié, et sans avoir besoin d'un nonce valide. Nous verrons que cela peut s'avérer très utile pour un attaquant souhaitant stocker une image sur un serveur. Elle pourrait par exemple être exploitée dans une deuxième phase d'attaque, via une LFI permettant d'exécuter le contenu de l'image. Nous y reviendrons plus tard.
+À la ligne 519 du fichier `ultimatemember/includes/core/class-files.php`, dans la fonction `ajax_image_upload()`, on retrouve une condition contenant une faille de sécurité. En effet, la condition indique que si l'on présente un nonce invalide et que l'on n'est pas connecté, aucune erreur n'est déclenchée. Cela pose un gros problème : un attaquant a la possibilité d'uploader une image sans être authentifié, et sans avoir besoin d'un nonce valide. Nous verrons que cela peut s'avérer très utile pour un attaquant souhaitant stocker une image sur un serveur elle pourrait par exemple être exploitée dans une deuxième phase d'attaque, via une LFI permettant d'exécuter le contenu de l'image. Nous y reviendrons plus tard.
 
 ```php
 if ( ! wp_verify_nonce( $nonce, "um_upload_nonce-{$timestamp}" ) && is_user_logged_in() ) {
@@ -57,7 +58,7 @@ if ( ! wp_verify_nonce( $nonce, "um_upload_nonce-{$timestamp}" ) && is_user_logg
 }
 ```
 
-La même erreur a été commise un peu plus loin dans le code. En effet, à la ligne 691 du même fichier `ultimatemember/includes/core/class-files.php`, dans la fonction `ajax_file_upload()`, on retrouve la même faille, posant le même problème. Sauf que cette fois, on peut uploader n'importe quel fichier.
+La même erreur a été commise un peu plus loin dans le code. En effet, à la ligne 691 du même fichier `ultimatemember/includes/core/class-files.php`, dans la fonction `ajax_file_upload()`, on retrouve la même faille, posant le même problème sauf que cette fois, on peut uploader n'importe quel fichier.
 
 ```php
 if ( ! wp_verify_nonce( $nonce, 'um_upload_nonce-' . $timestamp ) && is_user_logged_in() ) {
@@ -79,7 +80,7 @@ Une fois l'environnement en place, on peut l'attaquer. Deux solutions s'offrent 
 
 **Forge**: Pour forger notre requête, on a besoin de certains paramètres que l'on peut retrouver directement dans le code source.
 
-Le fait de pouvoir uploader des images et de les stocker temporairement sur un serveur pose un vrai problème : on peut y cacher du PHP, et une faille de type LFI ailleurs sur le même site WordPress, via un autre plugin vulnérable, par exemple: pourrait alors permettre d'exécuter ce code PHP caché dans l'image.
+Le fait de pouvoir uploader des images et de les stocker temporairement sur un serveur pose un vrai problème : on peut y cacher du PHP, et une faille de type LFI ailleurs sur le même site WordPress via un autre plugin vulnérable, par exemple pourrait alors permettre d'exécuter ce code PHP caché dans l'image.
 
 ### Setup
 
