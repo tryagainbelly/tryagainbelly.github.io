@@ -4,4 +4,4 @@ icon: fas fa-info-circle
 order: 4
 ---
 
-Hello it's belly, I'm a student in BUT Networks and Telecommunications. Iam cybersecurity enthusiast, and I write articles on things I've been able to do during internships or in my free time or articles on topics that interest me.
+Salut, c'est Belly. Je suis étudiant en BUT Réseaux et Télécommunications. Je suis passionné de cybersécurité et j'écris des articles sur des choses que j'ai pu faire pendant mes stages, pendant mon temps libre, ainsi que sur des sujets qui m'intéressent.

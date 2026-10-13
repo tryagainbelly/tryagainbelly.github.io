@@ -13,8 +13,9 @@ tags: [wordpress, cve]
 - [2026-06-15] Demande de CVE
 - [2026-06-15] Mail envoyé à l'administrateur du GitHub du plugin, avec explication de la faille et proposition de correctif | Aucune réponse reçue
 - [2026-08-26] Réponse de CVE
-- [2026-08-26] Envoie d'un mail à wpscan
+- [2026-08-26] Envoi d'un mail à WPScan
 - [2026-10-10] Publication de la faille
+- [2026] À suivre...
 ```
 
 **TL;DR :** le plugin WordPress Ultimate Member (de la 2.12.0 à la 2.14.0, la dernière version en date) contient une faille dans sa vérification de nonce qui permet à n'importe quel visiteur non authentifié d'uploader des fichiers sur le serveur. Cet article explique la faille dans le code, puis la démontre avec un PoC testé sur deux versions du plugin.
