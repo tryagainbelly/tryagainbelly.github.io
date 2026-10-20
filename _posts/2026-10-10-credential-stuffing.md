@@ -111,7 +111,7 @@ Received Payload:
 {"message":"Bad username or password.","code":"bad-credentials","statusCode":401}
 ```
 
-![/assets/img/credential_stuffing/screen_requete_failed1.png]
+![Requête échouée](/assets/img/credential_stuffing/screen_requete_failed1.png)
 
 À noter que notre bot obtient un statut `none` à ce stade.
 
